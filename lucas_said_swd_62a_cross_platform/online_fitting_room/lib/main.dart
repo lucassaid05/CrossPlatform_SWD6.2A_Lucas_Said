@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
       title: 'AR Online Fitting Room',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF0B1D2B), // Navy blackish
+        scaffoldBackgroundColor: const Color(0xFF0B1D2B),
       ),
       home: const HomeScreen(),
     );
