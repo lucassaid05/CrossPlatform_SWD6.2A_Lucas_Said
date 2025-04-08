@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -15,52 +16,99 @@ class _ProfileScreenState extends State<ProfileScreen> {
   );
   String _location = 'Fetching location...';
 
+  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
   @override
   void initState() {
     super.initState();
+    initNotification();
     _getLocation();
   }
 
+  Future<void> initNotification() async {
+    const AndroidInitializationSettings androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    const InitializationSettings initSettings = InitializationSettings(
+      android: androidSettings,
+    );
+
+    await _flutterLocalNotificationsPlugin.initialize(initSettings);
+  }
+
   Future<void> _getLocation() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      setState(() => _location = 'Location services are disabled.');
-      return;
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        setState(() => _location = 'Permission denied');
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() => _location = 'Location services are disabled.');
         return;
       }
-    }
 
-    if (permission == LocationPermission.deniedForever) {
-      setState(() => _location = 'Permission permanently denied');
-      return;
-    }
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          setState(() => _location = 'Permission denied');
+          return;
+        }
+      }
 
-    Position position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.low,
+      if (permission == LocationPermission.deniedForever) {
+        setState(() => _location = 'Permission permanently denied');
+        return;
+      }
+
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.low,
+      );
+
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        final Placemark placemark = placemarks.first;
+        final String? country = placemark.country;
+
+        if (country != null && country.isNotEmpty) {
+          setState(() {
+            _location = country;
+          });
+          _showLocationNotification(country);
+        } else {
+          setState(() => _location = 'Country not available');
+        }
+      } else {
+        setState(() => _location = 'Country not found');
+      }
+    } catch (e) {
+      setState(() => _location = 'Error: $e');
+      debugPrint('Location error: $e');
+    }
+  }
+
+  Future<void> _showLocationNotification(String country) async {
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'location_channel',
+          'Location Updates',
+          channelDescription: 'Notification when location is found',
+          importance: Importance.high,
+          priority: Priority.high,
+        );
+
+    const NotificationDetails notificationDetails = NotificationDetails(
+      android: androidDetails,
     );
 
-    List<Placemark> placemarks = await placemarkFromCoordinates(
-      position.latitude,
-      position.longitude,
+    await _flutterLocalNotificationsPlugin.show(
+      0,
+      'Location Found',
+      'You are currently in $country',
+      notificationDetails,
     );
-
-    if (placemarks.isNotEmpty) {
-      setState(() {
-        _location = placemarks.first.country ?? 'Unknown country';
-      });
-    } else {
-      setState(() => _location = 'Country not found');
-    }
   }
 
   @override
