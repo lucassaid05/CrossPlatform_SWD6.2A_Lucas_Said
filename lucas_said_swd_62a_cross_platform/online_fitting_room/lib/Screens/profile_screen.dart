@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -11,6 +13,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController _usernameController = TextEditingController(
     text: 'JohnDoe',
   );
+  String _location = 'Fetching location...';
+
+  @override
+  void initState() {
+    super.initState();
+    _getLocation();
+  }
+
+  Future<void> _getLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      setState(() => _location = 'Location services are disabled.');
+      return;
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        setState(() => _location = 'Permission denied');
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      setState(() => _location = 'Permission permanently denied');
+      return;
+    }
+
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.low,
+    );
+
+    List<Placemark> placemarks = await placemarkFromCoordinates(
+      position.latitude,
+      position.longitude,
+    );
+
+    if (placemarks.isNotEmpty) {
+      setState(() {
+        _location = placemarks.first.country ?? 'Unknown country';
+      });
+    } else {
+      setState(() => _location = 'Country not found');
+    }
+  }
 
   @override
   void dispose() {
@@ -48,7 +99,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               onChanged: (value) {
-                // Live updates handled here if needed later
                 setState(() {});
               },
             ),
@@ -64,9 +114,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 color: Colors.white12,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Text(
-                'London, UK',
-                style: TextStyle(color: Colors.white),
+              child: Text(
+                _location,
+                style: const TextStyle(color: Colors.white),
               ),
             ),
           ],
