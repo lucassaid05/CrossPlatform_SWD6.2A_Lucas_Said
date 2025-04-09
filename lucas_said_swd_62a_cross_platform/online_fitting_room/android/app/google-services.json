@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "272644011438",
+    "project_id": "online-fitting-room",
+    "storage_bucket": "online-fitting-room.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:272644011438:android:86d6afb75452c7035f443f",
+        "android_client_info": {
+          "package_name": "com.onlinefittingroom"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAe0ikPudpzgX8PVqRHa1FXYTSDP7mTdrU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

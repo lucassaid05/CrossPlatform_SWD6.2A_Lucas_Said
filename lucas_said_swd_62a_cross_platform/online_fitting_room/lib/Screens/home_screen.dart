@@ -1,8 +1,55 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
 import 'profile_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String _countryInfo = 'Loading country info...';
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCountryInfo();
+  }
+
+  Future<void> _fetchCountryInfo() async {
+    const country = 'Malta';
+    final url = Uri.parse('https://restcountries.com/v3.1/name/$country');
+
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final countryData = data[0];
+
+        final name = countryData['name']['common'];
+        final capital = (countryData['capital'] as List).first;
+        final region = countryData['region'];
+        final language = (countryData['languages'] as Map).values.first;
+
+        setState(() {
+          _countryInfo =
+              '$name - Capital: $capital\nRegion: $region, Language: $language';
+        });
+      } else {
+        setState(() {
+          _countryInfo = 'Failed to load country info';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _countryInfo = 'Error loading country info';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +74,14 @@ class HomeScreen extends StatelessWidget {
                   style: Theme.of(
                     context,
                   ).textTheme.bodyLarge?.copyWith(color: Colors.white70),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  _countryInfo,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: Colors.white60),
                   textAlign: TextAlign.center,
                 ),
               ],
