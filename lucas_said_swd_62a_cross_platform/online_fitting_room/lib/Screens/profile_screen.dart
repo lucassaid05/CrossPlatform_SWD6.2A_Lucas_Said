@@ -146,9 +146,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              onChanged: (value) {
-                setState(() {});
-              },
             ),
             const SizedBox(height: 30),
             const Text(
